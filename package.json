@@ -1,0 +1,15 @@
+{
+  "name": "obniz-ble-with-webbluetooth",
+  "version": "1.0.0",
+  "description": "ブラウザから、Web Bluetooth APIを用いてobnizのBLEと通信をするデモコードです。",
+  "main": "ble.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "obniz": "^3.16.0",
+    "random-words": "^1.1.1"
+  }
+}

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BLE Central</title>
+</head>
+
+<body>
+  <h1>BLE Central</h1>
+
+  <!-- このapp内のみVue.jsの管理範囲です -->
+  <div id="app">
+
+    <p>
+      <h2>1. スキャン（アドバタイズ中のデバイスを見つける）</h2>
+      サービスUUID<input v-model="customServiceUUID"><br>
+      キャラクタリスティックUUID<input v-model="characteristicUUID"><br>
+      <button @click="start">ペリフェラルのスキャン</button><br>
+      スキャンしたデバイス: {{ deviceName }}
+    </p>
+
+    <p>
+      <h2>2. GATT接続（サービス・キャラクタリスティックの取得）</h2>
+      <button @click="connect" :disabled="device === null">GATT接続</button>
+      状態: {{ status }}
+    </p>
+
+    <p>
+      <h2>3. キャラクタリスティックの操作</h2>
+      <div v-if="characteristic">
+        <b>{{ characteristic.uuid }}</b><br>
+        <input v-model="characteristicValue">
+        <button @click="read">Read</button> <button @click="write">Write</button>
+      </div>
+    </p>
+
+  </div>
+
+  <!-- Vue.jsをCDNから読み込みます -->
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+  <script>
+
+    const app = new Vue({
+      el: '#app',
+      data: {
+        device: null,
+        deviceName: '不明',
+        status: '未接続',
+        customServiceUUID: '2fb65514-1a38-4597-bf63-590e175a262f',
+        characteristicUUID: '1b68902e-da10-40d8-a58f-c68da82c3021',
+        characteristic: null,
+        characteristicValue: '',
+      },
+
+      methods: {
+
+        // BLEデバイスのスキャン
+        start() {
+          this.device = null;
+          this.deviceName = '';
+          // 全てのデバイスを検索して表示・ユーザー定義サービスを許可（これを実行するとデバイス選択ダイアログが出る）
+          navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [ this.customServiceUUID ]
+          }).then(device => {
+            // デバイスが選択されたらここにくる
+            this.device = device;
+            console.log(device);
+            // デバイス名を表示
+            this.deviceName = device.name;
+          }).catch(e => {
+            // エラーなど
+            if (e instanceof DOMException) alert('ペリフェラルのスキャンがキャンセルされました。');
+            //if (e instanceof NotFoundError) alert('ペリフェラルが見つかりませんでした。');
+            //if (e instanceof SecurityError) alert('安全ではないオリジン（非https・iframeなど）からは利用できません。');
+          });
+
+          navigator.bluetooth.addEventListener('advertisementreceived', event => {
+            console.log(event);
+          });
+        },
+
+        // BLEデバイスへの接続（ペアリング）
+        async connect() {
+          // デバイスがスキャンされていれば接続
+          if (this.device) {
+            this.status = 'デバイス接続中...';
+            const server = await this.device.gatt.connect();
+            
+            this.status = 'サービス取得中...';
+            const services = await server.getPrimaryServices();
+            console.log('サービス(1つめ)', services[0]);
+
+            this.status = 'キャラクタリスティック取得中...';
+            this.characteristic = await services[0].getCharacteristic(this.characteristicUUID);
+            console.log('キャラクタリスティック', this.characteristic);
+
+            this.status = '接続済み';
+          }
+        },
+
+        // キャラクタリスティックの値を読み取る
+        async read() {
+          if (this.characteristic) {
+            // DataViewという形式で読み取ることができます
+            const dv = await this.characteristic.readValue();
+            // 一度ArrayBufferに変換してから文字列にします
+            const str = String.fromCharCode.apply('', new Uint8Array(dv.buffer));
+            this.characteristicValue = str;
+          }
+        },
+
+        // キャラクタリスティックに値を書き込む
+        async write() {
+          if (this.characteristic) {
+            await this.characteristic.writeValue((new TextEncoder).encode(this.characteristicValue));
+          }
+        },
+
+      },
+    });
+
+  </script>
+</body>
+
+</html>
