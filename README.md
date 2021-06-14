@@ -20,7 +20,7 @@
   - **iOSでは利用できません**（ごめんなさい）。
 3. ブラウザで [index.html](index.html) を表示させます。
   - GitHub Pagesにホスティングしていますので以下にアクセスしてください。  
-    [BLE Central](https://ukkz.github.io/obniz-ble-with-webbluetooth/)
+    [BLE Central](https://ukkz.github.io/obniz-BLE-with-WebBluetooth/)
   - または、ローカルでデプロイする場合: npmの `serve` やVSCodeのLive Server機能を使い、localhostから始まるアドレスを開きます。
 
 ### 使い方
